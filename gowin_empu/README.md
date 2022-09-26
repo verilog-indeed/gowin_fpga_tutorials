@@ -234,7 +234,7 @@ You will also need to download Gowin's SDK kit for the GW1NS(R)-4C, [the latest 
 
 ![](media/empu-tut-gmd-devices.png)
 
-### The project and library structure:
+### The library structure:
 
 The Gowin EMPU implements ARM's CMSIS-Core abstraction interface similarly to other parts like the STM32 microcontrollers. The CMSIS defines standard functions that can be used to access the Cortex-M3's system control registers, SysTick timer and other functionality common in Cortex-M devices. The generic CMSIS-Core files are contained in the "CMSIS\CoreSupport\gmd" subfolder.
 
@@ -243,6 +243,8 @@ Gowin provides a bootloader (CMSIS\DeviceSupport\startup\gmd\startup_gw1ns4c.S) 
 Gowin also provides a CMSIS Peripheral Access Layer System in the "CMSIS\system\" directory, it is comprised of primarily two files:
   - The "gw1ns4c.h" header file which defines the register structs of the various peripherals and the memory addresses at which the peripherals can be found. Gowin suggests that the user only imports this specific header in their "main.c" file.
   - The "system_gw1ns4c.c" file which is primarily used for clock configuration, it defines global system/peripheral clock variables, and functions for initializing and updating the clock variables. The SystemCoreClock variable in particular is part of CMSIS-Core and various peripherals may rely on its value for their operation so it's important that it matches the real-life clocking situation (the clock signal at the EMPU's clock pin). SystemCoreClockUpdate() simply copies the predefined __SYSTEM_CLOCK macro by default, but it can be modified to update SystemCoreClock in order to match frequency changes from the PLL (PLLVR can change output clock division dynamically to obtain a slower clock for power-saving purposes).
+
+Finally, GMD requires a linker script that defines the size of available SRAM and flash, and the placement of various code sections. A sample linker script is provided by Gowin as "Script/flash/gmd/gw1ns4c_flash.ld".
 
 ## Conclusion:
 
