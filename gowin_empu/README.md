@@ -30,7 +30,7 @@ My VHDL entity declaration looks like this:
 
 * Open the IP Core Generator and look for the "Gowin_EMPU(GW1NS-4C)" core, double click the IP to start configuring it.
 
-![](%%empu-tut-ipgen%%)
+![](media/empu-tut-ipgen.png)
 
 You may have noticed that this core is listed under "Soft IP", the reason is that while the bulk of the microcontroller (mainly the CPU) is built-in silicon, the microcontroller still requires FPGA resources for RAM, flash and other peripherals. Enabling more peripherals leads to increased resource utilization. Make sure the core is listed under "Hard-Core-MCU" nonetheless as Gowin does provide an entirely soft-core Cortex-M solution for their bigger FPGAs such as the GW2A series.
 
@@ -38,7 +38,7 @@ You might also wonder what's up with the GW1NS-4C moniker. The GW1NSR-4C of the 
 
 * The next step is to configure the peripherals of the EMPU to suit your needs using the IP generator pop-up, when a peripheral is enabled the label turns green with the exception of SRAM which is always enabled.
 
-![](%%empu-tut-empu-config%%)
+![](media/empu-tut-empu-config.png)
 
 * 
  * Configure SRAM to 8KB (remember, SRAM for the MCU is taken from the FPGA's BSRAM). 
@@ -46,13 +46,13 @@ You might also wonder what's up with the GW1NS-4C moniker. The GW1NSR-4C of the 
 
 When the GPIO I/O option is ticked the GPIOs are combined into a single 16-bit bi-directional bus of type inout (tri-state based). But when it is unchecked the GPIOs are split into two buses, one for input and one for output (with an accompanying gpioouten bus to indicate whether a particular GPIO line is in input mode or output mode). There is still only 16 total GPIO lines, each can be either input or output, but this separation helps design internal FPGA peripherals where the inout type cannot be synthesized as FPGAs lack internal tri-state buffers.
 
-![](%%empu-tut-ipc-sram-gpio%%)
+![](media/empu-tut-ipc-sram-gpio.png)
 
 * 
  * Enable UART0, then change the language option at the top to match the language you're using, in my case I'm using VHDL.
  * Click OK to generate, then OK again to add the newly generated files to your project.
 
-![](%%empu-tut-ipc-uart%%)
+![](media/empu-tut-ipc-uart.png)
 
  * Among the generated files is a temporary file ("gowin_empu_tmp.vhd") with an example instantiation. Copy it and paste it to our top-level design file, then connect each of the MCU's signals to the appropriate top-level ports. 
 
@@ -78,7 +78,7 @@ You can increase the MCU's clock up to 80MHz with the use of a PLL or phase-lock
 
 * Optionally, we can use Gowin's IP generator to configure and utilize a PLL to double the crystal clock's frequency. In the IP Core Generator tab search for the PLLVR module and double click to bring up its IP configurator pop-up.
  * Making sure the IP configurator is in the "General mode", change the CLKIN value to 27 and the Expected Frequency value of CLKOUT to 54 (all frequencies are in MHz). Click the Calculate button to set the configuration, it automatically calculates the required division factors and warns you if a frequency target cannot be met. Finally make sure the IP generator is set to your HDL of choice and click OK to generate and add the files to your project.
-![](%%empu-tut-ipc-pll%%)
+![](media/empu-tut-ipc-pll.png)
  * Much like the MCU instantiation, a temporary file containing an example instance of the PLL will be opened up. Copy and paste it to the top-level module file we created, then modify the previous MCU instantiation accordingly so that it will use the PLL's clock output instead of the crystal clock, don't forget to also modify the PLL's instantiation so that it takes in the crystal clock as the input reference.
 
 In VHDL, I needed to add a signal (wire) between the PLL and MCU for the doubled clock:
@@ -104,7 +104,7 @@ In VHDL, I needed to add a signal (wire) between the PLL and MCU for the doubled
 
 This is a good time to mention Gowin IDE's .ipc files, when you generate an IP core the settings you used are saved in an .ipc file inside the subfolder where the encrypted IP files are stored (you may have to check in a file explorer). If you want to make minor adjustments to an existing IP core without completely redoing your setup, you can simply open the .ipc file in the IP Core Generator using the folder icon and modify the existing modification, make sure to regenerate after you're done.
 
-![](%%empu-tut-ipc-file%%)
+![](media/empu-tut-ipc-file.png)
 
 If you find yourself having to calculate the PLLVR division factors yourself or otherwise don't use Gowin's IDE, [this PLL Calculator comes in handy.](https://github.com/juj/gowin_fpga_code_generators)
 
@@ -200,14 +200,14 @@ You will also need to download Gowin's SDK kit for the GW1NS(R)-4C, [the latest 
 * Extract the contents of the SDK archive, then open the GMD.
 * Go to File -> New -> C Project. Give a name to your project and select a project type of "Executable -> Empty Project" with the "ARM Cross GCC" toolchain.
 
-![new project](%%empu-tut-gmd-project-title%%)
+![new project](media/empu-tut-gmd-project-title.png)
 
 * Click Next, keep the defaults for the build configurations and click Next again. Finally select the toolchain "GNU MCU Eclipse ARM Embedded GCC (arm-none-eabi-gcc)" if it's not selected already and click Finish to close the wizard.
 * From the extracted SDK archive contents, navigate to the subfolder "src\c_lib", copy both the "template" and "lib" folders in your new project's folder. If you stuck to Eclipse's workspace defaults then the folder is "C:\GMD\workspace\<project title>", paste the files there.
 * The "lib" folder contains device configurations intended for both GMD and Keil, you need to delete the Keil version of the files to avoid conflicts. Do this by deleting the "lib\CMSIS\CoreSupport\arm" and "lib\CMSIS\DeviceSupport\startup\arm" directories.
 * Go back to GMD and hit F5 to refresh your project's files if they haven't already. You should see the following file structure:
 
-![](%%empu-tut-gmd-project-structure%%)
+![](media/empu-tut-gmd-project-structure.png)
 
 * Right click on your project in the Project Explorer tab and open Properties. Head to "C/C++ Build -> Settings" and open the Tool Settings tab (if the tab isn't showing you may need to use the cursors on the right until it shows up).
 * In the Tool Settings tab, set the Target Processor configurations to: (if it isn't set already)
@@ -218,7 +218,7 @@ You will also need to download Gowin's SDK kit for the GW1NS(R)-4C, [the latest 
  * Unaligned access：Toolchain default
 * Find the "GNU ARM Cross Assembler -> Preprocessor" settings and create a new element in the "Defined symbols" pane, give this symbol a value of "__STARTUP_CLEAR_BSS.
 
-![](%%empu-tut-gmd-asm-symbols%%)
+![](media/empu-tut-gmd-asm-symbols.png)
 
 * Head to "GNU ARM Cross C Compiler -> Includes" and add the following directories (use the Workspace... option instead of creating hard links):
  * lib/CMSIS/CoreSupport/gmd
@@ -226,13 +226,13 @@ You will also need to download Gowin's SDK kit for the GW1NS(R)-4C, [the latest 
  * lib/StdPeriph_Driver/Includes
  * template
 
-![](%%empu-tut-gmd-includes%%)
+![](media/empu-tut-gmd-includes.png)
 
 * Go to "GNU ARM Cross C Linker -> General" and add the "lib/Script/flash/gmd/gw1ns4c_flash.ld" linker script file.
 * Finally in "GNU ARM Cross Create Flash Image -> General", change the "Output file format" setting to "Raw binary".
 * Go to the "Devices" tab and select the "ARM -> ARM Cortex M3 -> ARMCM3" device, click Apply then OK to save your settings.
 
-![](%%empu-tut-gmd-devices%%)
+![](media/empu-tut-gmd-devices.png)
 
 TODO: describe what the library files do?
 
