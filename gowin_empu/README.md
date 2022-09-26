@@ -78,7 +78,9 @@ You can increase the MCU's clock up to 80MHz with the use of a PLL or phase-lock
 
 * Optionally, we can use Gowin's IP generator to configure and utilize a PLL to double the crystal clock's frequency. In the IP Core Generator tab search for the PLLVR module and double click to bring up its IP configurator pop-up.
  * Making sure the IP configurator is in the "General mode", change the CLKIN value to 27 and the Expected Frequency value of CLKOUT to 54 (all frequencies are in MHz). Click the Calculate button to set the configuration, it automatically calculates the required division factors and warns you if a frequency target cannot be met. Finally make sure the IP generator is set to your HDL of choice and click OK to generate and add the files to your project.
+
 ![](media/empu-tut-ipc-pll.png)
+
  * Much like the MCU instantiation, a temporary file containing an example instance of the PLL will be opened up. Copy and paste it to the top-level module file we created, then modify the previous MCU instantiation accordingly so that it will use the PLL's clock output instead of the crystal clock, don't forget to also modify the PLL's instantiation so that it takes in the crystal clock as the input reference.
 
 In VHDL, I needed to add a signal (wire) between the PLL and MCU for the doubled clock:
@@ -216,7 +218,7 @@ You will also need to download Gowin's SDK kit for the GW1NS(R)-4C, [the latest 
  * Instruction set：Thumb (-mthumb)
  * Endianness：Toolchain default
  * Unaligned access：Toolchain default
-* Find the "GNU ARM Cross Assembler -> Preprocessor" settings and create a new element in the "Defined symbols" pane, give this symbol a value of "__STARTUP_CLEAR_BSS.
+* Find the "GNU ARM Cross Assembler -> Preprocessor" settings and create a new element in the "Defined symbols" pane, give this symbol a value of "__STARTUP_CLEAR_BSS".
 
 ![](media/empu-tut-gmd-asm-symbols.png)
 
