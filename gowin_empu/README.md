@@ -39,22 +39,20 @@ You might also wonder what's up with the GW1NS-4C moniker. The GW1NSR-4C of the 
 * The next step is to configure the peripherals of the EMPU to suit your needs using the IP generator pop-up, when a peripheral is enabled the label turns green with the exception of SRAM which is always enabled.
 
 ![](media/empu-tut-empu-config.png)
-
-* 
- * Configure SRAM to 8KB (remember, SRAM for the MCU is taken from the FPGA's BSRAM). 
- * Enable the GPIO peripheral and make sure the GPIO I/O option is ticked. 
+ 
+  * Configure SRAM to 8KB (remember, SRAM for the MCU is taken from the FPGA's BSRAM). 
+  * Enable the GPIO peripheral and make sure the GPIO I/O option is ticked. 
 
 When the GPIO I/O option is ticked the GPIOs are combined into a single 16-bit bi-directional bus of type inout (tri-state based). But when it is unchecked the GPIOs are split into two buses, one for input and one for output (with an accompanying gpioouten bus to indicate whether a particular GPIO line is in input mode or output mode). There is still only 16 total GPIO lines, each can be either input or output, but this separation helps design internal FPGA peripherals where the inout type cannot be synthesized as FPGAs lack internal tri-state buffers.
 
 ![](media/empu-tut-ipc-sram-gpio.png)
 
-* 
- * Enable UART0, then change the language option at the top to match the language you're using, in my case I'm using VHDL.
- * Click OK to generate, then OK again to add the newly generated files to your project.
+  * Enable UART0, then change the language option at the top to match the language you're using, in my case I'm using VHDL.
+  * Click OK to generate, then OK again to add the newly generated files to your project.
 
 ![](media/empu-tut-ipc-uart.png)
 
- * Among the generated files is a temporary file ("gowin_empu_tmp.vhd") with an example instantiation. Copy it and paste it to our top-level design file, then connect each of the MCU's signals to the appropriate top-level ports. 
+  * Among the generated files is a temporary file ("gowin_empu_tmp.vhd") with an example instantiation. Copy it and paste it to our top-level design file, then connect each of the MCU's signals to the appropriate top-level ports. 
 
 For VHDL this looks something like this:
 
@@ -77,11 +75,11 @@ For VHDL this looks something like this:
 You can increase the MCU's clock up to 80MHz with the use of a PLL or phase-locked loop. It is an analog component that can multiply and divide frequency to generate an output clock that is a rational multiple of the input clock's frequency. 
 
 * Optionally, we can use Gowin's IP generator to configure and utilize a PLL to double the crystal clock's frequency. In the IP Core Generator tab search for the PLLVR module and double click to bring up its IP configurator pop-up.
- * Making sure the IP configurator is in the "General mode", change the CLKIN value to 27 and the Expected Frequency value of CLKOUT to 54 (all frequencies are in MHz). Click the Calculate button to set the configuration, it automatically calculates the required division factors and warns you if a frequency target cannot be met. Finally make sure the IP generator is set to your HDL of choice and click OK to generate and add the files to your project.
+  * Making sure the IP configurator is in the "General mode", change the CLKIN value to 27 and the Expected Frequency value of CLKOUT to 54 (all frequencies are in MHz). Click the Calculate button to set the configuration, it automatically calculates the required division factors and warns you if a frequency target cannot be met. Finally make sure the IP generator is set to your HDL of choice and click OK to generate and add the files to your project.
 
 ![](media/empu-tut-ipc-pll.png)
 
- * Much like the MCU instantiation, a temporary file containing an example instance of the PLL will be opened up. Copy and paste it to the top-level module file we created, then modify the previous MCU instantiation accordingly so that it will use the PLL's clock output instead of the crystal clock, don't forget to also modify the PLL's instantiation so that it takes in the crystal clock as the input reference.
+  * Much like the MCU instantiation, a temporary file containing an example instance of the PLL will be opened up. Copy and paste it to the top-level module file we created, then modify the previous MCU instantiation accordingly so that it will use the PLL's clock output instead of the crystal clock, don't forget to also modify the PLL's instantiation so that it takes in the crystal clock as the input reference.
 
 In VHDL, I needed to add a signal (wire) between the PLL and MCU for the doubled clock:
 
@@ -195,7 +193,7 @@ The Cortex M3 microcontroller can be programmed in C/C++ using either Keil MDK o
 
 Installation is straightforward, unzip the package and start the wizard. The wizard doesn't allow you to change the installation directory so make sure to have some space on the C:\ drive, the GMD is also configured to use "C:\GMD\workspace" as the workspace directory by default, and the workspace also includes various example projects for Gowin's microcontroller IPs, both soft core and silicon. At the end of the installation you'll get the option to install drivers for the SEGGER J-Link JTAG debugger, if you have one of those laying around and want to use it leave the option ticked.
 
-You will also need to download Gowin's SDK kit for the GW1NS(R)-4C, [the latest version as of writing is V1.1.3 and can be downloaded from this hotlink](https://cdn.gowinsemi.com.cn/Gowin_EMPU(GW1NS-4C\)_V1.1.3.zip). It contains the Cortex M3 configuration files for both the GMD and ARM Keil, the libraries you need to interact with the peripherals and several reference designs showcasing the variety of the EMPU's features.
+You will also need to download Gowin's SDK kit for the GW1NS(R)-4C, [the latest version as of writing is V1.1.3 and can be downloaded from this hotlink](https://cdn.gowinsemi.com.cn/Gowin_EMPU(GW1NS-4C)_V1.1.3.zip). It contains the Cortex M3 configuration files for both the GMD and ARM Keil, the libraries you need to interact with the peripherals and several reference designs showcasing the variety of the EMPU's features.
 
 ## Setting up a new GMD Eclipse project:
 
@@ -213,20 +211,20 @@ You will also need to download Gowin's SDK kit for the GW1NS(R)-4C, [the latest 
 
 * Right click on your project in the Project Explorer tab and open Properties. Head to "C/C++ Build -> Settings" and open the Tool Settings tab (if the tab isn't showing you may need to use the cursors on the right until it shows up).
 * In the Tool Settings tab, set the Target Processor configurations to: (if it isn't set already)
- * Arm family：cortex-m3
- * Architecture：Toolchain default
- * Instruction set：Thumb (-mthumb)
- * Endianness：Toolchain default
- * Unaligned access：Toolchain default
+  * Arm family：cortex-m3
+  * Architecture：Toolchain default
+  * Instruction set：Thumb (-mthumb)
+  * Endianness：Toolchain default
+  * Unaligned access：Toolchain default
 * Find the "GNU ARM Cross Assembler -> Preprocessor" settings and create a new element in the "Defined symbols" pane, give this symbol a value of "__STARTUP_CLEAR_BSS".
 
 ![](media/empu-tut-gmd-asm-symbols.png)
 
 * Head to "GNU ARM Cross C Compiler -> Includes" and add the following directories (use the Workspace... option instead of creating hard links):
- * lib/CMSIS/CoreSupport/gmd
- * lib/CMSIS/DeviceSupport/system
- * lib/StdPeriph_Driver/Includes
- * template
+    * lib/CMSIS/CoreSupport/gmd
+    * lib/CMSIS/DeviceSupport/system
+    * lib/StdPeriph_Driver/Includes
+    * template
 
 ![](media/empu-tut-gmd-includes.png)
 
@@ -236,7 +234,15 @@ You will also need to download Gowin's SDK kit for the GW1NS(R)-4C, [the latest 
 
 ![](media/empu-tut-gmd-devices.png)
 
-TODO: describe what the library files do?
+### The project and library structure:
+
+The Gowin EMPU implements ARM's CMSIS-Core abstraction interface similarly to other parts like the STM32 microcontrollers. The CMSIS defines standard functions that can be used to access the Cortex-M3's system control registers, SysTick timer and other functionality common in Cortex-M devices. The generic CMSIS-Core files are contained in the "CMSIS\CoreSupport\gmd" subfolder.
+
+Gowin provides a bootloader (CMSIS\DeviceSupport\startup\gmd\startup_gw1ns4c.S) that initializes the stack pointer and program counter, and also defines the interrupt vector table for various system, peripheral and reset interrupts. The behavior of interrupt handlers is provided by the user by implementing the interrupt service routine functions defined in "template\gw1ns4c_it.c", or by just implementing the defined interrupt handler as a C function with the same name.
+
+Gowin also provides a CMSIS Peripheral Access Layer System in the "CMSIS\system\" directory, it is comprised of primarily two files:
+  - The "gw1ns4c.h" header file which defines the register structs of the various peripherals and the memory addresses at which the peripherals can be found. Gowin suggests that the user only imports this specific header in their "main.c" file.
+  - The "system_gw1ns4c.c" file which is primarily used for clock configuration, it defines global system/peripheral clock variables, and functions for initializing and updating the clock variables. The SystemCoreClock variable in particular is part of CMSIS-Core and various peripherals may rely on its value for their operation so it's important that it matches the real-life clocking situation (the clock signal at the EMPU's clock pin). SystemCoreClockUpdate() simply copies the predefined __SYSTEM_CLOCK macro by default, but it can be modified to update SystemCoreClock in order to match frequency changes from the PLL (PLLVR can change output clock division dynamically to obtain a slower clock for power-saving purposes).
 
 ## Conclusion:
 
@@ -245,4 +251,4 @@ Relevant Gowin documentation:
 * [Gowin_EMPU IDE user guide (IPUG928E)](http://cdn.gowinsemi.com.cn/IPUG928E.pdf) for more information on the usage of J-Link debuggers, Keil MDK and more.
 * [Gowin_EMPU Software Design(IPUG931E)](http://cdn.gowinsemi.com.cn/IPUG931E.pdf) for the EMPU's memory map, peripheral register definition and more.
 * [Gowin_EMPU Hardware Design(IPUG932E)](http://cdn.gowinsemi.com.cn/IPUG932E.pdf) for signal definition, peripheral details and more.
-* [The latest version of GW1NS-4C example projects and libraries from Gowin](https://cdn.gowinsemi.com.cn/Gowin_EMPU(GW1NS-4C\)_V1.1.3.zip). Make sure to alter SRAM and clock configurations to match your FPGA design setup.
+* [The latest version of GW1NS-4C example projects and libraries from Gowin](https://cdn.gowinsemi.com.cn/Gowin_EMPU(GW1NS-4C)_V1.1.3.zip). Make sure to alter SRAM and clock configurations to match your FPGA design setup.
