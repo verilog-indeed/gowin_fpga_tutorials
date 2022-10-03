@@ -4,7 +4,7 @@ Gowin parts target the low-mid range in terms of LUT count, their products are f
 
 Utilizing the embedded microcontroller requires first instantiating it in an FPGA design along with clocking resources and any peripherals you may need, then actually writing the firmware code to make it do stuff.
 
-## Configuring the FPGA for the EMPU:
+## **Configuring the FPGA for the EMPU:**
 
 This is primarily done through the IP generator wizard of the Gowin EDA, I'm currently using Gowin Education Ver. 1.9.8.03 of the IDE.
 
@@ -26,7 +26,7 @@ My VHDL entity declaration looks like this:
 		);
 	end soc_top;
 
-### Instantiating the EMPU
+### **Instantiating the EMPU**
 
 * Open the IP Core Generator and look for the "Gowin_EMPU(GW1NS-4C)" core, double click the IP to start configuring it.
 
@@ -68,9 +68,9 @@ For VHDL this looks something like this:
 			);
 	end structural;
 
-(VHDL tip: entity work.<entity_name> is a lifesaver, but you can also use the component-based instantiation if you really want to, Gowin IDE automatically adds all VHDL files to the "work" library)
+(VHDL tip: entity work.entity_name is a lifesaver, but you can also use the component-based instantiation if you really want to, Gowin IDE automatically adds all VHDL files to the "work" library)
 
-### Instantiating the PLL
+### **Instantiating the PLL**
 
 You can increase the MCU's clock up to 80MHz with the use of a PLL or phase-locked loop. It is an analog component that can multiply and divide frequency to generate an output clock that is a rational multiple of the input clock's frequency. 
 
@@ -110,7 +110,7 @@ If you find yourself having to calculate the PLLVR division factors yourself or 
 
 The PLLVR offers additional output channels for dividing/phase-shifting the main output so that you won't need extra PLLs or clock dividers, you can read more about [the clocking resources of Gowin FPGAs in UG286E.](http://cdn.gowinsemi.com.cn/UG286E.pdf)
 
-### Setting up the ports
+### **Setting up the ports**
 
 This is the VHDL top module I ended up with:
 
@@ -187,7 +187,7 @@ This is the .cst file I ended up with:
 
  * Run place & route and make sure there's no errors, we now have an FPGA bitstream ready to deploy the Cortex M3 MCU. Now we need to write the C firmware using GMD.
 
-## Installing the GMD:
+## **Installing the GMD:**
 
 The Cortex M3 microcontroller can be programmed in C/C++ using either Keil MDK or Gowin's MCU Designer based on Eclipse CDT, [the Education version of the GMD can be downloaded from here](https://magicjellybeanfpga.github.io/mjb/software.html) and that's what we'll use in this tutorial.
 
@@ -195,7 +195,7 @@ Installation is straightforward, unzip the package and start the wizard. The wiz
 
 You will also need to download Gowin's SDK kit for the GW1NS(R)-4C, [the latest version as of writing is V1.1.3 and can be downloaded from this hotlink](https://cdn.gowinsemi.com.cn/Gowin_EMPU(GW1NS-4C)_V1.1.3.zip). It contains the Cortex M3 configuration files for both the GMD and ARM Keil, the libraries you need to interact with the peripherals and several reference designs showcasing the variety of the EMPU's features.
 
-## Setting up a new GMD Eclipse project:
+## **Setting up a new GMD Eclipse project:**
 
 * Extract the contents of the SDK archive, then open the GMD.
 * Go to File -> New -> C Project. Give a name to your project and select a project type of "Executable -> Empty Project" with the "ARM Cross GCC" toolchain.
@@ -203,7 +203,7 @@ You will also need to download Gowin's SDK kit for the GW1NS(R)-4C, [the latest 
 ![new project](media/empu-tut-gmd-project-title.png)
 
 * Click Next, keep the defaults for the build configurations and click Next again. Finally select the toolchain "GNU MCU Eclipse ARM Embedded GCC (arm-none-eabi-gcc)" if it's not selected already and click Finish to close the wizard.
-* From the extracted SDK archive contents, navigate to the subfolder "src\c_lib", copy both the "template" and "lib" folders in your new project's folder. If you stuck to Eclipse's workspace defaults then the folder is "C:\GMD\workspace\<project title>", paste the files there.
+* From the extracted SDK archive contents, navigate to the subfolder "src\c_lib", copy both the "template" and "lib" folders in your new project's folder. If you stuck to Eclipse's workspace defaults then the folder is "C:\GMD\workspace\project_title", paste the files there.
 * The "lib" folder contains device configurations intended for both GMD and Keil, you need to delete the Keil version of the files to avoid conflicts. Do this by deleting the "lib\CMSIS\CoreSupport\arm" and "lib\CMSIS\DeviceSupport\startup\arm" directories.
 * Go back to GMD and hit F5 to refresh your project's files if they haven't already. You should see the following file structure:
 
@@ -234,19 +234,134 @@ You will also need to download Gowin's SDK kit for the GW1NS(R)-4C, [the latest 
 
 ![](media/empu-tut-gmd-devices.png)
 
-### The library structure:
+### **The library structure:**
 
-The Gowin EMPU implements ARM's CMSIS-Core abstraction interface similarly to other parts like the STM32 microcontrollers. The CMSIS defines standard functions that can be used to access the Cortex-M3's system control registers, SysTick timer and other functionality common in Cortex-M devices. The generic CMSIS-Core files are contained in the "CMSIS\CoreSupport\gmd" subfolder.
+The Gowin EMPU implements ARM's CMSIS-Core abstraction interface similarly to other parts like the STM32 microcontrollers. The CMSIS defines standard functions that can be used to access the Cortex-M3's system control registers, SysTick timer and other functionality common in Cortex-M devices. The generic CMSIS-Core files are contained in the "lib\CMSIS\CoreSupport\gmd" subfolder.
 
-Gowin provides a bootloader (CMSIS\DeviceSupport\startup\gmd\startup_gw1ns4c.S) that initializes the stack pointer and program counter, and also defines the interrupt vector table for various system, peripheral and reset interrupts. The behavior of interrupt handlers is provided by the user by implementing the interrupt service routine functions defined in "template\gw1ns4c_it.c", or by just implementing the defined interrupt handler as a C function with the same name.
+Gowin provides a bootloader (lib\CMSIS\DeviceSupport\startup\gmd\startup_gw1ns4c.S) that initializes the stack pointer and program counter, and also defines the interrupt vector table for various system, peripheral and reset interrupts. The behavior of interrupt handlers is provided by the user by implementing the interrupt service routine functions defined in "template\gw1ns4c_it.c", or by just implementing the defined interrupt handler as a C function with the same name.
 
 Gowin also provides a CMSIS Peripheral Access Layer System in the "CMSIS\system\" directory, it is comprised of primarily two files:
   - The "gw1ns4c.h" header file which defines the register structs of the various peripherals and the memory addresses at which the peripherals can be found. Gowin suggests that the user only imports this specific header in their "main.c" file.
-  - The "system_gw1ns4c.c" file which is primarily used for clock configuration, it defines global system/peripheral clock variables, and functions for initializing and updating the clock variables. The SystemCoreClock variable in particular is part of CMSIS-Core and various peripherals may rely on its value for their operation so it's important that it matches the real-life clocking situation (the clock signal at the EMPU's clock pin). SystemCoreClockUpdate() simply copies the predefined __SYSTEM_CLOCK macro by default, but it can be modified to update SystemCoreClock in order to match frequency changes from the PLL (PLLVR can change output clock division dynamically to obtain a slower clock for power-saving purposes).
+  - The "system_gw1ns4c.c" file which is primarily used for clock configuration, it defines global system/peripheral clock variables, and functions for initializing and updating them. The SystemCoreClock variable in particular is part of CMSIS-Core and various peripherals may rely on its value for their operation so it's important that it matches the real-life clocking situation (the clock signal at the EMPU's clock pin). SystemCoreClockUpdate() simply copies the predefined __SYSTEM_CLOCK macro by default, but it can be modified to update SystemCoreClock in order to match frequency changes from the PLL (PLLVR can change output clock division dynamically to obtain a slower clock for power-saving purposes).
 
 Finally, GMD requires a linker script that defines the size of available SRAM and flash, and the placement of various code sections. A sample linker script is provided by Gowin as "Script/flash/gmd/gw1ns4c_flash.ld".
 
-## Conclusion:
+### **Clock and SRAM configuration**
+
+* Before writing any C code, we should configure our clock and SRAM settings:
+	- To modify the clock value that our MCU expects, open the "lib/CMSIS/DeviceSupport/system/system_gw1ns4c.c" file and look for the macro definition of "__SYSTEM_CLOCK", modify its value to match the clock speed of our design in Hz. If you used the PLL as shown earlier the value would be 54000000UL (unsigned long), you can ignore the "__XTAL" definition. This setting affects certain functionality such as baudrate generation for the UART peripheral so make sure it matches your setup:
+
+		```#define __SYSTEM_CLOCK    (54000000UL)	   /* 54MHz */```
+	- To change the SRAM setting, open the "lib\Script\flash\gmd\gw1ns4c_flash.ld" linker configs file and modify the "RAM" line of the "MEMORY" section to match the SRAM size you assigned to Gowin EMPU, in our case this is 8KiB so we'll put 8192 bytes in the LENGTH field (you can also use 0x2000 in hex):
+		```
+		MEMORY
+		{
+			FLASH (rx) : ORIGIN = 0x0,        LENGTH = 0x8000  /* 32KByte */
+			RAM (rwx)  : ORIGIN = 0x20000000, LENGTH = 8192  /* 8KByte */
+		}
+
+### **LED blinky example with timer delays**
+
+* In this simple LED blinker, I show how a GPIO should be instantiated before it is used and a basic "delay milliseconds" function using Timer0 of the EMPU: (copy and replace the contents of "main.c" in the template folder)
+	```
+	/* Includes ------------------------------------------------------------------*/
+	#include "gw1ns4c.h"
+	/*----------------------------------------------------------------------------*/
+
+	/* Declarations*/
+	void initializeGPIO();
+	void initializeTimer();
+	void delayMillis(uint32_t ms);
+
+	int main(void)
+	{
+		SystemInit(); //Configures CPU for the defined system clock
+		initializeGPIO();
+		initializeTimer();
+
+		//make GPIO pin7 an output pin without relying on the library
+		//GPIO0 -> OUTENSET |= GPIO_Pin_7;
+
+		/* Infinite loop */
+		while(1)
+		{
+			GPIO_ResetBit(GPIO0, GPIO_Pin_7);
+			delayMillis(500);
+			GPIO_SetBit(GPIO0, GPIO_Pin_7);
+			delayMillis(500);
+		}
+	}
+
+	void initializeGPIO() {
+		GPIO_InitTypeDef gpioInitStruct;
+
+		//Select pin7, you can OR pins together to initialize them at the same time
+		gpioInitStruct.GPIO_Pin = GPIO_Pin_7;
+
+		//Set selected pins as output (see GPIOMode_TypeDef in gw1ns4c_gpio.h)
+		gpioInitStruct.GPIO_Mode = GPIO_Mode_OUT;
+
+		//Disable interrupts on selected pins (see GPIOInt_TypeDef)
+		gpioInitStruct.GPIO_Int = GPIO_Int_Disable;
+
+		//Initialize the GPIO using the configured init struct
+		//GPIO0 is a pointer containing the memory address of the GPIO APB peripheral
+		GPIO_Init(GPIO0, &gpioInitStruct);
+	}
+
+	void initializeTimer() {
+		TIMER_InitTypeDef timerInitStruct;
+
+		timerInitStruct.Reload = 0;
+
+		//Disable interrupt requests from timer for now
+		timerInitStruct.TIMER_Int = DISABLE;
+
+		//Disable timer enabling/clocking from external pins (GPIO)
+		timerInitStruct.TIMER_Exti = TIMER_DISABLE;
+
+		TIMER_Init(TIMER0, &timerInitStruct);
+		TIMER_StopTimer(TIMER0);
+	}
+
+	#define CYCLES_PER_MILLISEC (SystemCoreClock / 1000)
+	void delayMillis(uint32_t ms) {
+		TIMER_StopTimer(TIMER0);
+		//Reset timer just in case it was modified elsewhere
+		TIMER_SetValue(TIMER0, 0); 
+		TIMER_EnableIRQ(TIMER0);
+
+		uint32_t reloadVal = CYCLES_PER_MILLISEC * ms;
+		//Timer interrupt will trigger when it reaches the reload value
+		TIMER_SetReload(TIMER0, reloadVal); 
+
+		TIMER_StartTimer(TIMER0);
+		//Block execution until timer wastes the calculated amount of cycles
+		while (TIMER_GetIRQStatus(TIMER0) != SET);
+
+		TIMER_StopTimer(TIMER0);
+		TIMER_ClearIRQ(TIMER0);
+		TIMER_SetValue(TIMER0, 0);
+	}
+	```
+
+* Connect an LED to pin 35 of the Nano 4K (which corresponds to GPIO7 of our MCU).
+* Build the GMD project using the Eclipse hammer icon, or through "Project -> Build Project".
+* Run PnR on the FPGA project if you haven't already, connect your Tang Nano 4K then open the Programmer (Sipeed's own modified Programmer, the V1.9.8.03 Education Programmer or openFPGALoader will work).
+* In the Programmer Device Configuration, set the Access Mode to "MCU Mode" and the Operation to "Firmware Erase, Program".
+* Under "Programming Options" set the .fs bitstream file to the "impl/pnr/project_name.fs" file of your FPGA project if it isn't set already, and set the Firmware/Binary File to the "Debug/project_name.bin" file of your GMD project.
+![](media/empu-tut-programmer-config.png)
+* Flash your board, you should see the LED you added blinking!
+* You can also check out the assembly listing that was generated by the GCC by heading to the GMD project's properties -> C/C++ Build -> Settings -> Miscellaneous and ticking the "Generate assembler listing" flag.
+![](media/empu-tut-gcc-asm.png)
+
+Each C file gets a listing inside the same directory, for example the "main.c" assembly is saved in "main.o.lst".
+
+### **Redirecting printf() to UART**
+### **1602 Character LCD library**
+
+
+## **Conclusion**:
 
 Relevant Gowin documentation:
 
