@@ -473,7 +473,7 @@ You can interface the EMPU itself with a Hitachi HD44780-based (or compatible) c
 	void initializeTimer();
 	void delayMillis(uint32_t ms);
 	char messageBuffer[16];
-	//bitmap of the "yaz" character
+	//bitmap of the Tifinagh "yaz" character
 	int amazighGlyph[8] = 	   {0b10101,
 								0b10101,
 								0b11111,
@@ -490,7 +490,7 @@ You can interface the EMPU itself with a Hitachi HD44780-based (or compatible) c
 		//Initializes GPIO used by LCD and LCD itself
 		LCD_Init();
 
-		//Create the Tifinagh "yaz" character at index 0
+		//Create the "yaz" character at index 0
 		LCD_CreateCustomChar(0, amazighGlyph);
 
 		//Cursor to beginning of second line
