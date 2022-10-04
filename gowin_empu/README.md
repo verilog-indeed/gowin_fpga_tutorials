@@ -244,7 +244,9 @@ Gowin also provides a CMSIS Peripheral Access Layer System in the "CMSIS\system\
   - The "gw1ns4c.h" header file which defines the register structs of the various peripherals and the memory addresses at which the peripherals can be found. Gowin suggests that the user only imports this specific header in their "main.c" file.
   - The "system_gw1ns4c.c" file which is primarily used for clock configuration, it defines global system/peripheral clock variables, and functions for initializing and updating them. The SystemCoreClock variable in particular is part of CMSIS-Core and various peripherals may rely on its value for their operation so it's important that it matches the real-life clocking situation (the clock signal at the EMPU's clock pin). SystemCoreClockUpdate() simply copies the predefined __SYSTEM_CLOCK macro by default, but it can be modified to update SystemCoreClock in order to match frequency changes from the PLL (PLLVR can change output clock division dynamically to obtain a slower clock for power-saving purposes).
 
-Finally, GMD requires a linker script that defines the size of available SRAM and flash, and the placement of various code sections. A sample linker script is provided by Gowin as "Script/flash/gmd/gw1ns4c_flash.ld".
+GMD requires a linker script that defines the size of available SRAM and flash, and the placement of various code sections. A sample linker script is provided by Gowin as "Script/flash/gmd/gw1ns4c_flash.ld".
+
+Finally, the StdPeriph_Driver folder contains libraries for the various peripherals including UART, GPIO, timers etc... To use a peripheral you should consult the comments in its driver library source file. 
 
 ### **Clock and SRAM configuration**
 
@@ -389,15 +391,15 @@ Each C file gets a listing inside the Debug directory, for example the "main.c" 
 	//Initializes UART0
 	void initializeUART()
 	{
-	UART_InitTypeDef uartInitStruct;
-	//Enable transmission
-	uartInitStruct.UART_Mode.UARTMode_Tx = ENABLE;
-	//Disable reception
-	uartInitStruct.UART_Mode.UARTMode_Rx = DISABLE;
-	//9600 baud rate typical of Arduinos
-	uartInitStruct.UART_BaudRate = 9600;
-	//Initialize UART0 using the struct configs
-	UART_Init(UART0, &uartInitStruct);
+		UART_InitTypeDef uartInitStruct;
+		//Enable transmission
+		uartInitStruct.UART_Mode.UARTMode_Tx = ENABLE;
+		//Disable reception
+		uartInitStruct.UART_Mode.UARTMode_Rx = DISABLE;
+		//9600 baud rate typical of Arduinos
+		uartInitStruct.UART_BaudRate = 9600;
+		//Initialize UART0 using the struct configs
+		UART_Init(UART0, &uartInitStruct);
 	}
 
 	void initializeTimer() {
@@ -455,6 +457,103 @@ Each C file gets a listing inside the Debug directory, for example the "main.c" 
 
 * If the retargeting doesn't work for whatever reason, try using UART_SendString(UART0, char*) instead. You can use snprintf() to format a string in advance before sending it.
 ### **1602 Character LCD library**
+You can interface the EMPU itself with a Hitachi HD44780-based (or compatible) character LCD by using a simple library I made a while back, it works by bit-banging LCD commands through the GPIOs and functions in 4-bit data bus mode for now.
+* [Download the LCD library repository](https://github.com/verilog-indeed/nano_4k_1602_lcd), extract and copy the LCD_LIBRARY folder to your GMD project's folder.
+* Refresh the project explorer then go to the project's properties and head to "C/C++ Build -> Settings -> GNU ARM Cross C Compiler -> Includes", add the "LCD_LIBRARY/Includes" directory to the include paths.
+* Try this LCD example: (replace contents of main.c)
+  	```
+	/* Includes ------------------------------------------------------------------*/
+	#include "gw1ns4c.h"
+	#include <stdio.h>
+	#include <string.h>
+	#include "lcd_hd44780.h"
+	/*----------------------------------------------------------------------------*/
+
+	/* Declarations*/
+	void initializeTimer();
+	void delayMillis(uint32_t ms);
+	char messageBuffer[16];
+	//bitmap of the "yaz" character
+	int amazighGlyph[8] = 	   {0b10101,
+								0b10101,
+								0b11111,
+								0b00100,
+								0b00100,
+								0b11111,
+								0b10101,
+								0b10101};
+
+	int main(void)
+	{
+		SystemInit(); //Configures CPU for the defined system clock
+		initializeTimer();
+		//Initializes GPIO used by LCD and LCD itself
+		LCD_Init();
+
+		//Create the Tifinagh "yaz" character at index 0
+		LCD_CreateCustomChar(0, amazighGlyph);
+
+		//Cursor to beginning of second line
+		LCD_LineSelect(1);
+		//Write custom character at index 0
+		//You can also put alphanumeric ASCII characters
+		LCD_WriteChar(0);
+
+		uint32_t counter = 0;
+		while(1)
+		{
+			//Cursor to beginning of first line
+			LCD_LineSelect(0);
+			//format string and store in buffer
+			snprintf(messageBuffer, 16, "/r/GowinFPGA! #%d", counter);
+			LCD_WriteString(messageBuffer);
+
+			delayMillis(2000);
+			counter++;
+		}
+	}
+
+	void initializeTimer() {
+		TIMER_InitTypeDef timerInitStruct;
+
+		timerInitStruct.Reload = 0;
+
+		//Disable interrupt requests from timer for now
+		timerInitStruct.TIMER_Int = DISABLE;
+
+		//Disable timer enabling/clocking from external pins (GPIO)
+		timerInitStruct.TIMER_Exti = TIMER_DISABLE;
+
+		TIMER_Init(TIMER0, &timerInitStruct);
+		TIMER_StopTimer(TIMER0);
+	}
+
+	#define CYCLES_PER_MILLISEC (SystemCoreClock / 1000)
+	void delayMillis(uint32_t ms) {
+		TIMER_StopTimer(TIMER0);
+		//Reset timer just in case it was modified elsewhere
+		TIMER_SetValue(TIMER0, 0);
+		TIMER_EnableIRQ(TIMER0);
+
+		uint32_t reloadVal = CYCLES_PER_MILLISEC * ms;
+		//Timer interrupt will trigger when it reaches the reload value
+
+		TIMER_SetReload(TIMER0, reloadVal);
+		TIMER_StartTimer(TIMER0);
+		//Block execution until timer wastes the calculated amount of cycles
+		while (TIMER_GetIRQStatus(TIMER0) != SET);
+
+		TIMER_StopTimer(TIMER0);
+		TIMER_ClearIRQ(TIMER0);
+		TIMER_SetValue(TIMER0, 0);
+	}
+	``` 
+* Connect a 16x2 LCD (16-pin module) to the board:
+	* Disconnect the Nano 4K. Connect power and ground of the LCD's controller and backlight, and connect the output of a potentiometer to V0 for contrast setting. You can power it on and make sure the contrast adjustment works.
+	* Connect pins 32, 31, 30, 29, 28 and 27 of the Nano 4K to the pins E, RS, D4, D5, D6 and D7 of the LCD respectively.
+	* Tie the RW pin on the LCD to ground.
+* Build the project, connect the Nano 4K and flash the updated files. You should see a message on the LCD:
+	(TODO picture)
 
 
 ## **Conclusion**:
