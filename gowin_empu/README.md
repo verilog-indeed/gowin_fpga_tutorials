@@ -191,7 +191,7 @@ This is the .cst file I ended up with:
 
 The Cortex M3 microcontroller can be programmed in C/C++ using either Keil MDK or Gowin's MCU Designer based on Eclipse CDT, [the Education version of the GMD can be downloaded from here](https://magicjellybeanfpga.github.io/mjb/software.html) and that's what we'll use in this tutorial.
 
-Installation is straightforward, unzip the package and start the wizard. The wizard doesn't allow you to change the installation directory so make sure to have some space on the C:\ drive, the GMD is also configured to use "C:\GMD\workspace" as the workspace directory by default, and the workspace also includes various example projects for Gowin's microcontroller IPs, both soft core and silicon. At the end of the installation you'll get the option to install drivers for the SEGGER J-Link JTAG debugger, if you have one of those laying around and want to use it leave the option ticked.
+Installation is straightforward, unzip the package and start the wizard. The wizard doesn't allow you to change the installation directory so make sure to have some space on the C:\ drive, the GMD is also configured to use "C:\GMD\workspace" as the workspace directory by default, and the workspace also includes various example projects for Gowin's microcontroller IPs, both soft core and silicon. At the end of the installation you'll get the option to install drivers for the SEGGER J-Link JTAG debugger, if you have one of those laying around and want to use it leave the option ticked. Sipeed doesn't recommend using the J-Link on the Tang Nano 4K as it may interfere with the BL702 programmer chip connections, if you're still bent on using it do so at your own risk. (and please report back the results!)
 
 You will also need to download Gowin's SDK kit for the GW1NS(R)-4C, [the latest version as of writing is V1.1.3 and can be downloaded from this hotlink](https://cdn.gowinsemi.com.cn/Gowin_EMPU(GW1NS-4C)_V1.1.3.zip). It contains the Cortex M3 configuration files for both the GMD and ARM Keil, the libraries you need to interact with the peripherals and several reference designs showcasing the variety of the EMPU's features.
 
@@ -554,6 +554,7 @@ You can interface the EMPU itself with a Hitachi HD44780-based (or compatible) c
 	* Tie the RW pin on the LCD to ground.
 * Build the project, connect the Nano 4K and flash the updated files. You should see a message on the LCD:
 	(TODO picture)
+	(TODO hide code inside collapsible blocks)
 
 
 ## **Conclusion**:
