@@ -113,6 +113,8 @@ The PLLVR offers additional output channels for dividing/phase-shifting the main
 ### **Setting up the ports**
 
 This is the VHDL top module I ended up with:
+<details>
+	<summary>Show code</summary>
 
 	--"soc_top.vhd"
 	LIBRARY ieee;
@@ -144,6 +146,7 @@ This is the VHDL top module I ended up with:
 				clkin => xtal_clk --reference input clock is the crystal oscillator
 			);
 	end structural;
+</details>
 
 * Run synthesis to make sure everything compiles correctly, you're now ready to set up the ports using the FloorPlanner.
 * Open the FloorPlanner and create a new .cst file, use the FloorPlanner to set the following constraints:
@@ -153,6 +156,8 @@ This is the VHDL top module I ended up with:
  * GPIO pins 7 through 0 to pins 35, 34, 32, 31, 27, 28, 29 and 30 respectively, and set the IO type to LVCMOS25 for all of them.
 
 This is the .cst file I ended up with:
+<details>
+	<summary>Show code</summary>
 
 	//Copyright (C)2014-2022 Gowin Semiconductor Corporation.
 	//All rights reserved. 
@@ -184,6 +189,8 @@ This is the .cst file I ended up with:
 	IO_PORT "reset_n" PULL_MODE=UP;
 	IO_LOC "xtal_clk" 45;
 	IO_PORT "xtal_clk" PULL_MODE=UP;
+
+</details>
 
  * Run place & route and make sure there's no errors, we now have an FPGA bitstream ready to deploy the Cortex M3 MCU. Now we need to write the C firmware using GMD.
 
@@ -265,87 +272,89 @@ Finally, the StdPeriph_Driver folder contains libraries for the various peripher
 ### **LED blinky example with timer delays**
 
 * In this simple LED blinker, I show how a GPIO should be instantiated before it is used and a basic "delay milliseconds" function using Timer0 of the EMPU: (copy and replace the contents of "main.c" in the template folder)
-	```
-	/* Includes ------------------------------------------------------------------*/
-	#include "gw1ns4c.h"
-	/*----------------------------------------------------------------------------*/
+	<details>
+		<summary>Show code</summary>
 
-	/* Declarations*/
-	void initializeGPIO();
-	void initializeTimer();
-	void delayMillis(uint32_t ms);
+		/* Includes ------------------------------------------------------------------*/
+		#include "gw1ns4c.h"
+		/*----------------------------------------------------------------------------*/
 
-	int main(void)
-	{
-		SystemInit(); //Configures CPU for the defined system clock
-		initializeGPIO();
-		initializeTimer();
+		/* Declarations*/
+		void initializeGPIO();
+		void initializeTimer();
+		void delayMillis(uint32_t ms);
 
-		//make GPIO pin7 an output pin without relying on the library
-		//GPIO0 -> OUTENSET |= GPIO_Pin_7;
-
-		/* Infinite loop */
-		while(1)
+		int main(void)
 		{
-			GPIO_ResetBit(GPIO0, GPIO_Pin_7);
-			delayMillis(500);
-			GPIO_SetBit(GPIO0, GPIO_Pin_7);
-			delayMillis(500);
+			SystemInit(); //Configures CPU for the defined system clock
+			initializeGPIO();
+			initializeTimer();
+
+			//make GPIO pin7 an output pin without relying on the library
+			//GPIO0 -> OUTENSET |= GPIO_Pin_7;
+
+			/* Infinite loop */
+			while(1)
+			{
+				GPIO_ResetBit(GPIO0, GPIO_Pin_7);
+				delayMillis(500);
+				GPIO_SetBit(GPIO0, GPIO_Pin_7);
+				delayMillis(500);
+			}
 		}
-	}
 
-	void initializeGPIO() {
-		GPIO_InitTypeDef gpioInitStruct;
+		void initializeGPIO() {
+			GPIO_InitTypeDef gpioInitStruct;
 
-		//Select pin7, you can OR pins together to initialize them at the same time
-		gpioInitStruct.GPIO_Pin = GPIO_Pin_7;
+			//Select pin7, you can OR pins together to initialize them at the same time
+			gpioInitStruct.GPIO_Pin = GPIO_Pin_7;
 
-		//Set selected pins as output (see GPIOMode_TypeDef in gw1ns4c_gpio.h)
-		gpioInitStruct.GPIO_Mode = GPIO_Mode_OUT;
+			//Set selected pins as output (see GPIOMode_TypeDef in gw1ns4c_gpio.h)
+			gpioInitStruct.GPIO_Mode = GPIO_Mode_OUT;
 
-		//Disable interrupts on selected pins (see GPIOInt_TypeDef)
-		gpioInitStruct.GPIO_Int = GPIO_Int_Disable;
+			//Disable interrupts on selected pins (see GPIOInt_TypeDef)
+			gpioInitStruct.GPIO_Int = GPIO_Int_Disable;
 
-		//Initialize the GPIO using the configured init struct
-		//GPIO0 is a pointer containing the memory address of the GPIO APB peripheral
-		GPIO_Init(GPIO0, &gpioInitStruct);
-	}
+			//Initialize the GPIO using the configured init struct
+			//GPIO0 is a pointer containing the memory address of the GPIO APB peripheral
+			GPIO_Init(GPIO0, &gpioInitStruct);
+		}
 
-	void initializeTimer() {
-		TIMER_InitTypeDef timerInitStruct;
+		void initializeTimer() {
+			TIMER_InitTypeDef timerInitStruct;
 
-		timerInitStruct.Reload = 0;
+			timerInitStruct.Reload = 0;
 
-		//Disable interrupt requests from timer for now
-		timerInitStruct.TIMER_Int = DISABLE;
+			//Disable interrupt requests from timer for now
+			timerInitStruct.TIMER_Int = DISABLE;
 
-		//Disable timer enabling/clocking from external pins (GPIO)
-		timerInitStruct.TIMER_Exti = TIMER_DISABLE;
+			//Disable timer enabling/clocking from external pins (GPIO)
+			timerInitStruct.TIMER_Exti = TIMER_DISABLE;
 
-		TIMER_Init(TIMER0, &timerInitStruct);
-		TIMER_StopTimer(TIMER0);
-	}
+			TIMER_Init(TIMER0, &timerInitStruct);
+			TIMER_StopTimer(TIMER0);
+		}
 
-	#define CYCLES_PER_MILLISEC (SystemCoreClock / 1000)
-	void delayMillis(uint32_t ms) {
-		TIMER_StopTimer(TIMER0);
-		//Reset timer just in case it was modified elsewhere
-		TIMER_SetValue(TIMER0, 0); 
-		TIMER_EnableIRQ(TIMER0);
+		#define CYCLES_PER_MILLISEC (SystemCoreClock / 1000)
+		void delayMillis(uint32_t ms) {
+			TIMER_StopTimer(TIMER0);
+			//Reset timer just in case it was modified elsewhere
+			TIMER_SetValue(TIMER0, 0); 
+			TIMER_EnableIRQ(TIMER0);
 
-		uint32_t reloadVal = CYCLES_PER_MILLISEC * ms;
-		//Timer interrupt will trigger when it reaches the reload value
-		TIMER_SetReload(TIMER0, reloadVal); 
+			uint32_t reloadVal = CYCLES_PER_MILLISEC * ms;
+			//Timer interrupt will trigger when it reaches the reload value
+			TIMER_SetReload(TIMER0, reloadVal); 
 
-		TIMER_StartTimer(TIMER0);
-		//Block execution until timer wastes the calculated amount of cycles
-		while (TIMER_GetIRQStatus(TIMER0) != SET);
+			TIMER_StartTimer(TIMER0);
+			//Block execution until timer wastes the calculated amount of cycles
+			while (TIMER_GetIRQStatus(TIMER0) != SET);
 
-		TIMER_StopTimer(TIMER0);
-		TIMER_ClearIRQ(TIMER0);
-		TIMER_SetValue(TIMER0, 0);
-	}
-	```
+			TIMER_StopTimer(TIMER0);
+			TIMER_ClearIRQ(TIMER0);
+			TIMER_SetValue(TIMER0, 0);
+		}
+	</details>
 
 * Connect an LED to pin 35 of the Nano 4K (which corresponds to GPIO7 of our MCU).
 * Build the GMD project using the Eclipse hammer icon, or through "Project -> Build Project".
@@ -362,95 +371,104 @@ Each C file gets a listing inside the Debug directory, for example the "main.c" 
 ### **Redirecting printf() to UART**
 * Going back to the extracted SDK kit, copy the "c_lib/exmaple/retarget/gmd/retarget.c" (sic) file and paste it in the template folder of your project (same directory as main.c), press F5 to refresh the project explorer making sure that GMD can see the retarget.c file. This file overrides the _write() function to retarget printf() calls to UART0.
 * You can use this simple UART example as reference: (replace contents of main.c)
-	```
-	/* Includes ------------------------------------------------------------------*/
-	#include "gw1ns4c.h"
-	#include <stdio.h>
-	/*----------------------------------------------------------------------------*/
 
-	/* Declarations*/
-	void initializeTimer();
-	void delayMillis(uint32_t ms);
-	void initializeUART();
+	<details>
+		<summary>Show code</summary>
 
-	int main(void)
-	{
-		SystemInit(); //Configures CPU for the defined system clock
-		initializeTimer();
-		initializeUART();
+		/* Includes ------------------------------------------------------------------*/
+		#include "gw1ns4c.h"
+		#include <stdio.h>
+		/*----------------------------------------------------------------------------*/
 
-		uint32_t counter = 0;
-		while(1)
+		/* Declarations*/
+		void initializeTimer();
+		void delayMillis(uint32_t ms);
+		void initializeUART();
+
+		int main(void)
 		{
-			counter++;
-			printf("/r/GowinFPGA says hi! Count: %d\n", counter);
-			delayMillis(1000);
+			SystemInit(); //Configures CPU for the defined system clock
+			initializeTimer();
+			initializeUART();
+
+			uint32_t counter = 0;
+			while(1)
+			{
+				counter++;
+				printf("/r/GowinFPGA says hi! Count: %d\n", counter);
+				delayMillis(1000);
+			}
 		}
-	}
 
-	//Initializes UART0
-	void initializeUART()
-	{
-		UART_InitTypeDef uartInitStruct;
-		//Enable transmission
-		uartInitStruct.UART_Mode.UARTMode_Tx = ENABLE;
-		//Disable reception
-		uartInitStruct.UART_Mode.UARTMode_Rx = DISABLE;
-		//9600 baud rate typical of Arduinos
-		uartInitStruct.UART_BaudRate = 9600;
-		//Initialize UART0 using the struct configs
-		UART_Init(UART0, &uartInitStruct);
-	}
+		//Initializes UART0
+		void initializeUART()
+		{
+			UART_InitTypeDef uartInitStruct;
+			//Enable transmission
+			uartInitStruct.UART_Mode.UARTMode_Tx = ENABLE;
+			//Disable reception
+			uartInitStruct.UART_Mode.UARTMode_Rx = DISABLE;
+			//9600 baud rate typical of Arduinos
+			uartInitStruct.UART_BaudRate = 9600;
+			//Initialize UART0 using the struct configs
+			UART_Init(UART0, &uartInitStruct);
+		}
 
-	void initializeTimer() {
-		TIMER_InitTypeDef timerInitStruct;
+		void initializeTimer() {
+			TIMER_InitTypeDef timerInitStruct;
 
-		timerInitStruct.Reload = 0;
+			timerInitStruct.Reload = 0;
 
-		//Disable interrupt requests from timer for now
-		timerInitStruct.TIMER_Int = DISABLE;
+			//Disable interrupt requests from timer for now
+			timerInitStruct.TIMER_Int = DISABLE;
 
-		//Disable timer enabling/clocking from external pins (GPIO)
-		timerInitStruct.TIMER_Exti = TIMER_DISABLE;
+			//Disable timer enabling/clocking from external pins (GPIO)
+			timerInitStruct.TIMER_Exti = TIMER_DISABLE;
 
-		TIMER_Init(TIMER0, &timerInitStruct);
-		TIMER_StopTimer(TIMER0);
-	}
+			TIMER_Init(TIMER0, &timerInitStruct);
+			TIMER_StopTimer(TIMER0);
+		}
 
-	#define CYCLES_PER_MILLISEC (SystemCoreClock / 1000)
-	void delayMillis(uint32_t ms) {
-		TIMER_StopTimer(TIMER0);
-		TIMER_SetValue(TIMER0, 0); //Reset timer just in case it was modified elsewhere
-		TIMER_EnableIRQ(TIMER0);
+		#define CYCLES_PER_MILLISEC (SystemCoreClock / 1000)
+		void delayMillis(uint32_t ms) {
+			TIMER_StopTimer(TIMER0);
+			TIMER_SetValue(TIMER0, 0); //Reset timer just in case it was modified elsewhere
+			TIMER_EnableIRQ(TIMER0);
 
-		uint32_t reloadVal = CYCLES_PER_MILLISEC * ms;
-		//Timer interrupt will trigger when it reaches the reload value
-		TIMER_SetReload(TIMER0, reloadVal); 
+			uint32_t reloadVal = CYCLES_PER_MILLISEC * ms;
+			//Timer interrupt will trigger when it reaches the reload value
+			TIMER_SetReload(TIMER0, reloadVal); 
 
-		TIMER_StartTimer(TIMER0);
-		//Block execution until timer wastes the calculated amount of cycles
-		while (TIMER_GetIRQStatus(TIMER0) != SET);
+			TIMER_StartTimer(TIMER0);
+			//Block execution until timer wastes the calculated amount of cycles
+			while (TIMER_GetIRQStatus(TIMER0) != SET);
 
-		TIMER_StopTimer(TIMER0);
-		TIMER_ClearIRQ(TIMER0);
-		TIMER_SetValue(TIMER0, 0);
-	}
-	```
+			TIMER_StopTimer(TIMER0);
+			TIMER_ClearIRQ(TIMER0);
+			TIMER_SetValue(TIMER0, 0);
+		}
+	</details>
+
 * Connect pin 19 of the Nano 4K to a USB-UART converter, and add a pull-up resistor (10k ish or so should be good) to the Vcc of the converter. We set the UART TX pin to open-drain configuration which means the pull-up is necessary to actually see any kind of signal, I'm using an Arduino Uno which has the ability to add internal 5V pull-up resistors. The Arduino sketch I used is provided here for reference (it's probably not the best implementation but it works).
-	```
-	void setup() {
-		Serial.begin(9600);
-		pinMode(0, INPUT_PULLUP);
-	}
+	<details>
+			<summary>Show code</summary>
 
-	void loop() {} 
-
-	void serialEvent() {
-		while (Serial.available()) {
-			Serial.print((char)Serial.read());
+		
+		void setup() {
+			Serial.begin(9600);
+			pinMode(0, INPUT_PULLUP);
 		}
-	}
-	```
+
+		void loop() {} 
+
+		void serialEvent() {
+			while (Serial.available()) {
+				Serial.print((char)Serial.read());
+			}
+		}
+		
+	</details>
+
 * Build the GMD project and upload the new binaries to the board, set the COM tool of your UART converter to 9600 baud and you should see some messages:
 
 	![](media/empu-tut-uart-msg.png)
@@ -461,101 +479,108 @@ You can interface the EMPU itself with a Hitachi HD44780-based (or compatible) c
 * [Download the LCD library repository](https://github.com/verilog-indeed/nano_4k_1602_lcd), extract and copy the LCD_LIBRARY folder to your GMD project's folder.
 * Refresh the project explorer then go to the project's properties and head to "C/C++ Build -> Settings -> GNU ARM Cross C Compiler -> Includes", add the "LCD_LIBRARY/Includes" directory to the include paths.
 * Try this LCD example: (replace contents of main.c)
-  	```
-	/* Includes ------------------------------------------------------------------*/
-	#include "gw1ns4c.h"
-	#include <stdio.h>
-	#include <string.h>
-	#include "lcd_hd44780.h"
-	/*----------------------------------------------------------------------------*/
+	<details>
+		<summary>Show code</summary>
 
-	/* Declarations*/
-	void initializeTimer();
-	void delayMillis(uint32_t ms);
-	char messageBuffer[16];
-	//bitmap of the Tifinagh "yaz" character
-	int amazighGlyph[8] = 	   {0b10101,
-								0b10101,
-								0b11111,
-								0b00100,
-								0b00100,
-								0b11111,
-								0b10101,
-								0b10101};
+		
+		/* Includes ------------------------------------------------------------------*/
+		#include "gw1ns4c.h"
+		#include <stdio.h>
+		#include <string.h>
+		#include "lcd_hd44780.h"
+		/*----------------------------------------------------------------------------*/
 
-	int main(void)
-	{
-		SystemInit(); //Configures CPU for the defined system clock
-		initializeTimer();
-		//Initializes GPIO used by LCD and LCD itself
-		LCD_Init();
+		/* Declarations*/
+		void initializeTimer();
+		void delayMillis(uint32_t ms);
+		char messageBuffer[16];
+		//bitmap of the "yaz" character
+		int amazighGlyph[8] =	{
+									0b10101,
+									0b10101,
+									0b11111,
+									0b00100,
+									0b00100,
+									0b11111,
+									0b10101,
+									0b10101
+								};
 
-		//Create the "yaz" character at index 0
-		LCD_CreateCustomChar(0, amazighGlyph);
-
-		//Cursor to beginning of second line
-		LCD_LineSelect(1);
-		//Write custom character at index 0
-		//You can also put alphanumeric ASCII characters
-		LCD_WriteChar(0);
-
-		uint32_t counter = 0;
-		while(1)
+		int main(void)
 		{
+			SystemInit(); //Configures CPU for the defined system clock
+			initializeTimer();
+			//Initializes GPIO used by LCD and LCD itself
+			LCD_Init();
+
+			//Create the Tifinagh "yaz" character at index 0
+			LCD_CreateCustomChar(0, amazighGlyph);
+
 			//Cursor to beginning of first line
 			LCD_LineSelect(0);
-			//format string and store in buffer
-			snprintf(messageBuffer, 16, "/r/GowinFPGA! #%d", counter);
-			LCD_WriteString(messageBuffer);
+			LCD_WriteString("/r/GowinFPGA!");
 
-			delayMillis(2000);
-			counter++;
+
+
+			uint8_t counter = 0;
+			while(1)
+				{
+					//Cursor to beginning of second line
+					LCD_LineSelect(1);
+					//Write custom character from index 0
+					//You can also put alphanumeric ASCII characters
+					LCD_WriteChar(0);
+					//format counter as a decimal number string and store in buffer
+					snprintf(messageBuffer, 16, "    #%d", counter);
+					LCD_WriteString(messageBuffer);
+
+					delayMillis(2000);
+					counter++;
+				}
 		}
-	}
 
-	void initializeTimer() {
-		TIMER_InitTypeDef timerInitStruct;
+		void initializeTimer() {
+			TIMER_InitTypeDef timerInitStruct;
 
-		timerInitStruct.Reload = 0;
+			timerInitStruct.Reload = 0;
 
-		//Disable interrupt requests from timer for now
-		timerInitStruct.TIMER_Int = DISABLE;
+			//Disable interrupt requests from timer for now
+			timerInitStruct.TIMER_Int = DISABLE;
 
-		//Disable timer enabling/clocking from external pins (GPIO)
-		timerInitStruct.TIMER_Exti = TIMER_DISABLE;
+			//Disable timer enabling/clocking from external pins (GPIO)
+			timerInitStruct.TIMER_Exti = TIMER_DISABLE;
 
-		TIMER_Init(TIMER0, &timerInitStruct);
-		TIMER_StopTimer(TIMER0);
-	}
+			TIMER_Init(TIMER0, &timerInitStruct);
+			TIMER_StopTimer(TIMER0);
+		}
 
-	#define CYCLES_PER_MILLISEC (SystemCoreClock / 1000)
-	void delayMillis(uint32_t ms) {
-		TIMER_StopTimer(TIMER0);
-		//Reset timer just in case it was modified elsewhere
-		TIMER_SetValue(TIMER0, 0);
-		TIMER_EnableIRQ(TIMER0);
+		#define CYCLES_PER_MILLISEC (SystemCoreClock / 1000)
+		void delayMillis(uint32_t ms) {
+			TIMER_StopTimer(TIMER0);
+			//Reset timer just in case it was modified elsewhere
+			TIMER_SetValue(TIMER0, 0);
+			TIMER_EnableIRQ(TIMER0);
 
-		uint32_t reloadVal = CYCLES_PER_MILLISEC * ms;
-		//Timer interrupt will trigger when it reaches the reload value
+			uint32_t reloadVal = CYCLES_PER_MILLISEC * ms;
+			//Timer interrupt will trigger when it reaches the reload value
 
-		TIMER_SetReload(TIMER0, reloadVal);
-		TIMER_StartTimer(TIMER0);
-		//Block execution until timer wastes the calculated amount of cycles
-		while (TIMER_GetIRQStatus(TIMER0) != SET);
+			TIMER_SetReload(TIMER0, reloadVal);
+			TIMER_StartTimer(TIMER0);
+			//Block execution until timer wastes the calculated amount of cycles
+			while (TIMER_GetIRQStatus(TIMER0) != SET);
 
-		TIMER_StopTimer(TIMER0);
-		TIMER_ClearIRQ(TIMER0);
-		TIMER_SetValue(TIMER0, 0);
-	}
-	``` 
+			TIMER_StopTimer(TIMER0);
+			TIMER_ClearIRQ(TIMER0);
+			TIMER_SetValue(TIMER0, 0);
+		}
+		 
+	</details>
 * Connect a 16x2 LCD (16-pin module) to the board:
-	* Disconnect the Nano 4K. Connect power and ground of the LCD's controller and backlight, and connect the output of a potentiometer to V0 for contrast setting. You can power it on and make sure the contrast adjustment works.
+	* Disconnect the Nano 4K. Connect power and ground of the LCD's controller and backlight(5V for VDD, 3.3V for the backlight), and connect the output of a potentiometer to V0 for contrast setting. You can power it on and make sure the contrast adjustment works.
 	* Connect pins 32, 31, 30, 29, 28 and 27 of the Nano 4K to the pins E, RS, D4, D5, D6 and D7 of the LCD respectively.
 	* Tie the RW pin on the LCD to ground.
 * Build the project, connect the Nano 4K and flash the updated files. You should see a message on the LCD:
-	(TODO picture)
-	(TODO hide code inside collapsible blocks)
-
+	![](media/empu-lcd.jpg)
 
 ## **Conclusion**:
 
