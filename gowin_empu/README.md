@@ -114,7 +114,7 @@ The PLLVR offers additional output channels for dividing/phase-shifting the main
 
 This is the VHDL top module I ended up with:
 <details>
-	<summary>Show code</summary>
+	<summary><b>Show code</b></summary>
 
 	--"soc_top.vhd"
 	LIBRARY ieee;
@@ -157,7 +157,7 @@ This is the VHDL top module I ended up with:
 
 This is the .cst file I ended up with:
 <details>
-	<summary>Show code</summary>
+	<summary><b>Show code</b></summary>
 
 	//Copyright (C)2014-2022 Gowin Semiconductor Corporation.
 	//All rights reserved. 
@@ -273,7 +273,7 @@ Finally, the StdPeriph_Driver folder contains libraries for the various peripher
 
 * In this simple LED blinker, I show how a GPIO should be instantiated before it is used and a basic "delay milliseconds" function using Timer0 of the EMPU: (copy and replace the contents of "main.c" in the template folder)
 	<details>
-		<summary>Show code</summary>
+		<summary><b>Show code</b></summary>
 
 		/* Includes ------------------------------------------------------------------*/
 		#include "gw1ns4c.h"
@@ -373,7 +373,7 @@ Each C file gets a listing inside the Debug directory, for example the "main.c" 
 * You can use this simple UART example as reference: (replace contents of main.c)
 
 	<details>
-		<summary>Show code</summary>
+		<summary><b>Show code</b></summary>
 
 		/* Includes ------------------------------------------------------------------*/
 		#include "gw1ns4c.h"
@@ -451,7 +451,7 @@ Each C file gets a listing inside the Debug directory, for example the "main.c" 
 
 * Connect pin 19 of the Nano 4K to a USB-UART converter, and add a pull-up resistor (10k ish or so should be good) to the Vcc of the converter. We set the UART TX pin to open-drain configuration which means the pull-up is necessary to actually see any kind of signal, I'm using an Arduino Uno which has the ability to add internal 5V pull-up resistors. The Arduino sketch I used is provided here for reference (it's probably not the best implementation but it works).
 	<details>
-			<summary>Show code</summary>
+			<summary><b>Show code</b></summary>
 
 		
 		void setup() {
@@ -480,7 +480,7 @@ You can interface the EMPU itself with a Hitachi HD44780-based (or compatible) c
 * Refresh the project explorer then go to the project's properties and head to "C/C++ Build -> Settings -> GNU ARM Cross C Compiler -> Includes", add the "LCD_LIBRARY/Includes" directory to the include paths.
 * Try this LCD example: (replace contents of main.c)
 	<details>
-		<summary>Show code</summary>
+		<summary><b>Show code</b></summary>
 
 		
 		/* Includes ------------------------------------------------------------------*/
